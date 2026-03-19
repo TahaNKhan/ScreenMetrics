@@ -3,6 +3,13 @@
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_GFX.h>
 
+// Board detection and baud rate
+#if defined(ESP32) || defined(ESP8266)
+#define SERIAL_BAUD 115200
+#else
+#define SERIAL_BAUD 9600
+#endif
+
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32
 #define OLED_ADDR 0x3C
@@ -26,8 +33,8 @@ unsigned long lastScroll = 0;
 bool needsRedraw = true;
 
 void setup() {
-  Serial.begin(9600);
-  
+  Serial.begin(SERIAL_BAUD);
+
   // Initialize OLED
   display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR);
   display.clearDisplay();

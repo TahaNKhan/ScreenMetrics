@@ -11,7 +11,7 @@
 #endif
 
 #define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 32
+#define SCREEN_HEIGHT 64
 #define OLED_ADDR 0x3C
 #define OLED_RESET -1
 
@@ -48,7 +48,7 @@ void setup() {
   
   // Add some default metrics
   setMetric("BUILD", "PENDING");
-  setMetric("SEV2 TICKET COUNT", "3");
+  setMetric("SEV2s", "0");
   Serial.println("");
   Serial.println("OLED Metrics Display Ready");
   Serial.println("Commands:");
@@ -188,46 +188,49 @@ void updatePageCount() {
 
 void displayPage() {
   display.clearDisplay();
-  
+
   // Get current metric
   if (currentPage >= metricCount || metricKeys[currentPage] == "") {
-    display.setTextSize(1);
-    display.setCursor(0, 12);
+    display.setTextSize(2);
+    int x = (128 - 9 * 12) / 2;  // "No metrics" = 9 chars
+    if (x < 0) x = 0;
+    display.setCursor(x, 20);
     display.print("No metrics");
     display.display();
     return;
   }
-  
+
   String key = metricKeys[currentPage];
   String val = metricValues[currentPage];
-  
-  // TOP HALF: Metric name (smaller, fits more)
-  display.setTextSize(1);
-  int keyX = (128 - key.length() * 6) / 2;
-  if (keyX < 0) keyX = 0;
-  display.setCursor(keyX, 2);
-  display.print(key);
-  
-  // Draw line separator
-  display.drawLine(0, 14, 127, 14, SSD1306_WHITE);
-  
-  // BOTTOM HALF: Value (BIG text)
+
+  // Key - size 2 at top, centered
   display.setTextSize(2);
-  // Scale text to fit width
-  int charWidth = 12;  // 6 * 2
-  int maxChars = 128 / charWidth;
+  // Truncate key if too long (width ~10 chars at size 2)
+  if (key.length() > 10) key = key.substring(0, 10);
+  int keyX = (128 - key.length() * 12) / 2;
+  if (keyX < 0) keyX = 0;
+  display.setCursor(keyX, 0);
+  display.print(key);
+
+  // Draw line separator
+  display.drawLine(0, 16, 127, 16, SSD1306_WHITE);
+
+  // Value - size 2, below the line
+  int charWidth = 12;
+  int maxChars = 10;
   if (val.length() > maxChars) val = val.substring(0, maxChars);
   int valX = (128 - val.length() * charWidth) / 2;
   if (valX < 0) valX = 0;
-  display.setCursor(valX, 18);
+  display.setCursor(valX, 20);
   display.print(val);
-  
-  // Page indicator
+
+  // Page indicator at bottom
   display.setTextSize(1);
-  display.setCursor(110, 0);
+  display.setCursor(0, 56);
+  display.print("P");
   display.print(currentPage + 1);
   display.print("/");
   display.print(pageCount);
-  
+
   display.display();
 }

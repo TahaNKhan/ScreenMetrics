@@ -5,7 +5,7 @@ An Arduino sketch that displays metrics on an OLED screen with serial command co
 ## Hardware
 
 - **Board**: Arduino (Uno, Nano, ESP32, ESP8266, or similar)
-- **Display**: SSD1306 OLED (128x32 pixels, I2C address 0x3C)
+- **Display**: SSD1306 OLED (0.96" - 128x64 pixels, I2C address 0x3C)
 - **Connections**:
   - SDA -> A4 (or SDA pin on your board)
   - SCL -> A5 (or SCL pin on your board)
@@ -90,12 +90,13 @@ python screenmetrics.py --list-ports
 
 - Shows one metric at a time
 - Auto-scrolls every 5 seconds
-- Displays metric name (top) and value (large, bottom)
-- Page indicator in top-right corner (e.g., 1/3)
+- Displays metric name (centered, top) and value (large, below separator)
+- Page indicator at bottom left (e.g., P1/2)
 - Maximum 20 metrics supported
+- Metric name truncated to 10 characters, value to 10 characters
 
 ## Default Metrics
 
 On startup, two metrics are pre-populated:
 - BUILD: PENDING
-- SEV2 TICKET COUNT: 3
+- SEV2s: 0

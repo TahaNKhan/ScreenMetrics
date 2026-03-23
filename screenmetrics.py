@@ -80,6 +80,9 @@ class ScreenMetrics:
             timeout: Read timeout in seconds
         """
         self.serial = serial.Serial(port, baudrate, timeout=timeout)
+        # Disable DTR/RTS to prevent ESP8266 reset on open
+        self.serial.dtr = False
+        self.serial.rts = False
         # Wait longer for ESP32/ESP8266 which boot slower
         wait_time = 2 if baudrate <= 9600 else 3
         time.sleep(wait_time)
@@ -125,15 +128,16 @@ class ScreenMetrics:
 
     def _send(self, command: str) -> str:
         """Send command and read response."""
-        self.serial.write(f"{command}\n".encode())
-        self.serial.flush()
-        time.sleep(0.1)
+        c = f"{command}\r\n"
+        self.serial.write(c.encode('ascii'))
+        time.sleep(1)
 
         lines = []
         while self.serial.in_waiting:
-            line = self.serial.readline().decode().strip()
+            line = self.serial.readline().decode('utf-8', errors='replace').strip()
             if line:
                 lines.append(line)
+        print('\n'.join(lines))
         return "\n".join(lines)
 
     def close(self):
@@ -190,6 +194,7 @@ def main():
             print(sm.list())
         elif args.clear:
             print(sm.clear())
+        sm.close()
 
 
 if __name__ == "__main__":

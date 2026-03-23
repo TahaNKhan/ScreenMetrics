@@ -19,6 +19,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // Settings
 #define AUTO_SCROLL_INTERVAL 5000  // ms between page switches
+#define INSTRUCTIONS_PRINT_INTERVAL 5000  // ms between page switches
 #define METRIC_COUNT 20            // max metrics
 
 // Metric storage
@@ -30,6 +31,7 @@ int metricCount = 0;
 int currentPage = 0;
 int pageCount = 0;
 unsigned long lastScroll = 0;
+unsigned long lastInstructionsPrint = 0;
 bool needsRedraw = true;
 
 void setup() {
@@ -47,8 +49,14 @@ void setup() {
   }
   
   // Add some default metrics
-  setMetric("BUILD", "PENDING");
-  setMetric("SEV2s", "0");
+  setMetric("BUILD", "IDLE");
+  sendUsageToSerial();
+  
+  updatePageCount();
+  displayPage();
+}
+
+void sendUsageToSerial() {
   Serial.println("");
   Serial.println("OLED Metrics Display Ready");
   Serial.println("Commands:");
@@ -57,9 +65,6 @@ void setup() {
   Serial.println("  LIST            - Show all metrics");
   Serial.println("  CLEAR           - Clear all metrics");
   Serial.println("");
-  
-  updatePageCount();
-  displayPage();
 }
 
 void loop() {
@@ -70,6 +75,11 @@ void loop() {
     if (line.length() > 0) {
       processCommand(line);
     }
+  }
+
+  if (millis() - lastInstructionsPrint > INSTRUCTIONS_PRINT_INTERVAL) {
+    sendUsageToSerial();
+    lastInstructionsPrint = millis();
   }
   
   // Auto-scroll

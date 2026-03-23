@@ -1,89 +1,66 @@
 # ScreenMetrics
 
-An Arduino sketch that displays metrics on an OLED screen with serial command control.
+An ESP8266 sketch that displays metrics on an OLED screen. Metrics are persisted to EEPROM and survive resets.
 
 ## Hardware
 
-- **Board**: Arduino (Uno, Nano, ESP32, ESP8266, or similar)
+- **Board**: ESP8266 (NodeMCU, Wemos D1 Mini, or similar)
 - **Display**: SSD1306 OLED (0.96" - 128x64 pixels, I2C address 0x3C)
 - **Connections**:
-  - SDA -> A4 (or SDA pin on your board)
-  - SCL -> A5 (or SCL pin on your board)
-  - VCC -> 5V or 3.3V
+  - SDA -> D1 (GPIO5)
+  - SCL -> D2 (GPIO4)
+  - VCC -> 3.3V
   - GND -> GND
 
 ## Dependencies
 
 Install these libraries via Arduino Library Manager:
+
 - Adafruit SSD1306
 - Adafruit GFX
+- WiFiManager by Tzapu
 
-## Commands
+## Features
 
-Send commands via Serial (9600 baud):
+- **EEPROM Persistence**: Metrics are saved to flash and survive reboots/resets
+- **WiFi Optional**: Works without WiFi; when available, HTTP API is enabled
+- **AP Mode**: When no saved WiFi is found, creates AP "ScreenMetrics"
+- **mDNS**: Access via `http://screenmetrics.local` when on WiFi
+- **HTTP API**: Control metrics via HTTP requests
+- **OLED Display**: Shows one metric at a time, auto-scrolls every 5 seconds
+- **Network Display**: Shows IP address when connected to WiFi, "ScreenMetrics" when in AP mode
 
-| Command | Description |
-|---------|-------------|
-| `SET\|KEY\|VALUE` | Set or update a metric |
-| `DEL\|KEY` | Delete a metric |
-| `LIST` | List all metrics via serial |
-| `CLEAR` | Remove all metrics |
+## HTTP API
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/set?key=NAME&value=VALUE` | GET | Set or update a metric |
+| `/list` | GET | List all metrics |
+| `/clear` | GET | Remove all metrics |
+| `/status` | GET | Show device status |
 
 ### Examples
 
-```
-SET|BUILD|PASSING
-SET|SEV2 TICKET COUNT|3
-DEL|BUILD
-LIST
-CLEAR
-```
-
-## Python Client
-
-Install dependencies:
 ```bash
-pip install -r requirements.txt
+curl "http://screenmetrics.local/set?key=BUILD&value=PASSING"
+curl "http://192.168.1.100/set?key=SEV2s&value=3"
+curl "http://screenmetrics.local/list"
+curl "http://screenmetrics.local/clear"
 ```
 
-### As a Library
+## First Time Setup
 
-```python
-from screenmetrics import ScreenMetrics, find_port, list_available_ports
+The ESP8266 will create an AP named "ScreenMetrics" on first boot if no WiFi is configured.
 
-# Auto-detect port (default 9600 baud for Arduino)
-port = find_port()
-if port:
-    with ScreenMetrics(port) as sm:
-        sm.set("BUILD", "PASSING")
+1. Connect to WiFi network "ScreenMetrics" (password: `12345678`)
+2. Open browser to `http://192.168.4.1`
+3. Select your WiFi network and enter password
+4. Device will reboot and connect to your WiFi
 
-# For ESP32/ESP8266 use 115200 baud
-with ScreenMetrics("COM3", baudrate=115200) as sm:
-    sm.set("BUILD", "PASSING")
-
-# Or use with explicit port
-with ScreenMetrics("COM3") as sm:
-    sm.set("BUILD", "PASSING")
-    sm.set("CPU", "45%")
-    print(sm.list())
-```
-
-### CLI Usage
+Or use the Python setup command:
 
 ```bash
-# Auto-detect port (recommended for Arduino - 9600 baud)
-python screenmetrics.py -s BUILD PASSING
-python screenmetrics.py -l
-
-# For ESP32/ESP8266 (115200 baud)
-python screenmetrics.py -b 115200 -s BUILD PASSING
-
-# Specify port manually
-python screenmetrics.py -p COM3 -s BUILD PASSING
-python screenmetrics.py -p /dev/ttyUSB0 -b 115200 -s CPU 45%
-
-# List available ports
-python screenmetrics.py --list-ports
+python screenmetrics.py --setup
 ```
 
 ## Display Behavior
@@ -92,11 +69,46 @@ python screenmetrics.py --list-ports
 - Auto-scrolls every 5 seconds
 - Displays metric name (centered, top) and value (large, below separator)
 - Page indicator at bottom left (e.g., P1/2)
+- Bottom right shows:
+  - **IP address** (e.g., `192.168.1.100`) when connected to WiFi
+  - **"ScreenMetrics"** when in AP mode (no saved WiFi)
 - Maximum 20 metrics supported
 - Metric name truncated to 10 characters, value to 10 characters
 
-## Default Metrics
+## Serial Commands
 
-On startup, two metrics are pre-populated:
-- BUILD: PENDING
-- SEV2s: 0
+Serial commands are available at 115200 baud for debugging:
+
+| Command | Description |
+|---------|-------------|
+| `SET\|KEY\|VALUE` | Set or update a metric |
+| `DEL\|KEY` | Delete a metric |
+| `LIST` | List all metrics |
+| `CLEAR` | Remove all metrics |
+
+**Note:** Metrics are persisted to EEPROM immediately on every change, so serial resets don't affect them.
+
+## Reset WiFi Settings
+
+If you need to reconnect to a different WiFi network, add this in `setup()` before `wifiManager.autoConnect()`:
+
+```cpp
+wifiManager.resetSettings();
+```
+
+Then upload the sketch again - it will create the AP for reconfiguration.
+
+## Limitations
+
+### Serial Port Reset Issue
+
+The ESP8266 resets when the serial port is opened due to DTR (Data Terminal Ready) signal behavior. When any serial terminal connects (Arduino IDE Serial Monitor, Python script, etc.), DTR goes HIGH and the ESP8266 bootloader interprets this as a reset trigger.
+
+**Symptoms:**
+- Opening the serial port causes the ESP8266 to reboot
+- Each command sent may cause unexpected resets
+- Fast consecutive commands may not complete before reset
+
+**This does NOT affect metrics** - they are persisted to EEPROM immediately on every change and survive the reset.
+
+**Serial commands are for debugging only.** Use the HTTP API for reliable metric updates.

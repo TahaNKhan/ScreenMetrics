@@ -7,6 +7,7 @@ DisplayManager::DisplayManager(MetricsStore& store)
     , _pageCount(1)
     , _lastScrollMs(0)
     , _wifiConnected(false)
+    , needsRedraw(true)
 {}
 
 void DisplayManager::init() {

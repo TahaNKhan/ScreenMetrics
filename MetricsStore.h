@@ -20,7 +20,7 @@ public:
     bool remove(const String& key);
     void clear();
     String list() const;
-    String status() const;
+    String status(const String& ip) const;
 
     int count() const { return _count; }
     int maxCount() const { return MAX_COUNT; }

@@ -6,7 +6,7 @@
 
 class ApiServer {
 public:
-    ApiServer(MetricsStore& store, int port = 80);
+    ApiServer(MetricsStore& store);
 
     void begin();
     void handle();

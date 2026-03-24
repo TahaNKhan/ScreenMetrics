@@ -36,6 +36,7 @@ private:
     int _currentPage;
     int _pageCount;
     unsigned long _lastScrollMs;
+    bool needsRedraw;
 
     void drawMetricPage();
     void drawNoMetrics();

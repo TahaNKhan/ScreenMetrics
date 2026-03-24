@@ -12,6 +12,18 @@ An ESP8266 sketch that displays metrics on an OLED screen. Metrics are persisted
   - VCC -> 3.3V
   - GND -> GND
 
+## Architecture
+
+The codebase follows clean code principles with single-responsibility classes:
+
+| File | Responsibility |
+|------|---------------|
+| `ScreenMetrics.ino` | Entry point, wires components together |
+| `MetricsStore.h/.cpp` | Metric CRUD + EEPROM persistence |
+| `DisplayManager.h/.cpp` | OLED rendering + auto-scroll |
+| `ApiServer.h/.cpp` | HTTP REST API |
+| `SerialCLI.h/.cpp` | Serial command processing |
+
 ## Dependencies
 
 Install these libraries via Arduino Library Manager:
@@ -28,13 +40,15 @@ Install these libraries via Arduino Library Manager:
 - **mDNS**: Access via `http://screenmetrics.local` when on WiFi
 - **HTTP API**: Control metrics via HTTP requests
 - **OLED Display**: Shows one metric at a time, auto-scrolls every 5 seconds
-- **Network Display**: Shows IP address when connected to WiFi, "ScreenMetrics" when in AP mode
+- **Network Display**: Shows IP address when connected to WiFi
 
 ## HTTP API
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
+| `/` | GET | API documentation (HTML) |
 | `/set?key=NAME&value=VALUE` | GET | Set or update a metric |
+| `/delete?key=NAME` | GET | Remove a metric by key |
 | `/list` | GET | List all metrics |
 | `/clear` | GET | Remove all metrics |
 | `/status` | GET | Show device status |
@@ -42,10 +56,20 @@ Install these libraries via Arduino Library Manager:
 ### Examples
 
 ```bash
-curl "http://screenmetrics.local/set?key=BUILD&value=PASSING"
-curl "http://192.168.1.100/set?key=SEV2s&value=3"
-curl "http://screenmetrics.local/list"
-curl "http://screenmetrics.local/clear"
+# Set a metric
+curl "http://192.168.1.100/set?key=BUILD&value=PASSING"
+
+# Delete a metric
+curl "http://192.168.1.100/delete?key=BUILD"
+
+# List all metrics
+curl "http://192.168.1.100/list"
+
+# Clear all metrics
+curl "http://192.168.1.100/clear"
+
+# Check status
+curl "http://192.168.1.100/status"
 ```
 
 ## First Time Setup
@@ -57,21 +81,13 @@ The ESP8266 will create an AP named "ScreenMetrics" on first boot if no WiFi is 
 3. Select your WiFi network and enter password
 4. Device will reboot and connect to your WiFi
 
-Or use the Python setup command:
-
-```bash
-python screenmetrics.py --setup
-```
-
 ## Display Behavior
 
 - Shows one metric at a time
 - Auto-scrolls every 5 seconds
 - Displays metric name (centered, top) and value (large, below separator)
 - Page indicator at bottom left (e.g., P1/2)
-- Bottom right shows:
-  - **IP address** (e.g., `192.168.1.100`) when connected to WiFi
-  - **"ScreenMetrics"** when in AP mode (no saved WiFi)
+- Bottom right shows the device IP address
 - Maximum 20 metrics supported
 - Metric name truncated to 10 characters, value to 10 characters
 
@@ -86,29 +102,23 @@ Serial commands are available at 115200 baud for debugging:
 | `LIST` | List all metrics |
 | `CLEAR` | Remove all metrics |
 
-**Note:** Metrics are persisted to EEPROM immediately on every change, so serial resets don't affect them.
-
 ## Reset WiFi Settings
 
-If you need to reconnect to a different WiFi network, add this in `setup()` before `wifiManager.autoConnect()`:
+If you need to reconnect to a different WiFi network, add this before `autoConnect()`:
 
 ```cpp
-wifiManager.resetSettings();
+WiFiManager wm;
+wm.resetSettings();
 ```
 
-Then upload the sketch again - it will create the AP for reconfiguration.
+Then upload the sketch again — it will create the AP for reconfiguration.
 
 ## Limitations
 
 ### Serial Port Reset Issue
 
-The ESP8266 resets when the serial port is opened due to DTR (Data Terminal Ready) signal behavior. When any serial terminal connects (Arduino IDE Serial Monitor, Python script, etc.), DTR goes HIGH and the ESP8266 bootloader interprets this as a reset trigger.
+The ESP8266 resets when the serial port is opened due to DTR signal behavior. When any serial terminal connects, DTR goes HIGH and the ESP8266 bootloader interprets this as a reset trigger.
 
-**Symptoms:**
-- Opening the serial port causes the ESP8266 to reboot
-- Each command sent may cause unexpected resets
-- Fast consecutive commands may not complete before reset
-
-**This does NOT affect metrics** - they are persisted to EEPROM immediately on every change and survive the reset.
+**This does NOT affect metrics** — they are persisted to EEPROM immediately on every change and survive the reset.
 
 **Serial commands are for debugging only.** Use the HTTP API for reliable metric updates.

@@ -81,7 +81,7 @@ void DisplayManager::drawBottomBar() {
 void DisplayManager::drawMetricPage() {
     _display.clearDisplay();
 
-    if (!_store.hasMetrics()) {
+    if (_store.count() == 0) {
         drawNoMetrics();
         return;
     }

@@ -25,8 +25,6 @@ public:
     void setIp(const String& ip);
     void setWifiConnected(bool connected);
 
-    bool hasMetrics() const { return _store.count() > 0; }
-
 private:
     Adafruit_SSD1306 _display;
     MetricsStore& _store;

@@ -65,9 +65,9 @@ void ApiServer::sendHtmlDoc() {
         "<tr><td><span class='method get'>GET</span></td><td><code>/status</code></td><td>Device status</td></tr>"
         "</table>"
         "<h2>Examples</h2>"
-        "<div class='endpoint'><h3>Set a metric</h3><pre>curl \"http://screenmetrics.local/set?key=BUILD&amp;value=PASSING\"</pre></div>"
-        "<div class='endpoint'><h3>Delete a metric</h3><pre>curl \"http://screenmetrics.local/delete?key=BUILD\"</pre></div>"
-        "<div class='endpoint'><h3>List all metrics</h3><pre>curl http://screenmetrics.local/list</pre></div>"
+        "<div class='endpoint'><h3>Set a metric</h3><pre>curl \"http://" + (_ip.length() ? _ip : "YOUR_DEVICE_IP") + "/set?key=BUILD&amp;value=PASSING\"</pre></div>"
+        "<div class='endpoint'><h3>Delete a metric</h3><pre>curl \"http://" + (_ip.length() ? _ip : "YOUR_DEVICE_IP") + "/delete?key=BUILD\"</pre></div>"
+        "<div class='endpoint'><h3>List all metrics</h3><pre>curl http://" + (_ip.length() ? _ip : "YOUR_DEVICE_IP") + "/list</pre></div>"
         "<footer>ScreenMetrics &mdash; ESP8266 OLED Display</footer>"
         "</body></html>";
     _server.send(200, "text/html", html);

@@ -23,6 +23,7 @@ The codebase follows clean code principles with single-responsibility classes:
 | `DisplayManager.h/.cpp` | OLED rendering + auto-scroll |
 | `ApiServer.h/.cpp` | HTTP REST API |
 | `SerialCLI.h/.cpp` | Serial command processing |
+| `screenmetrics.py` | Python CLI client for interacting with the device |
 
 ## Dependencies
 
@@ -80,6 +81,12 @@ The ESP8266 will create an AP named "ScreenMetrics" on first boot if no WiFi is 
 2. Open browser to `http://192.168.4.1`
 3. Select your WiFi network and enter password
 4. Device will reboot and connect to your WiFi
+
+Or use the Python setup script:
+
+```bash
+python screenmetrics.py --setup
+```
 
 ## Display Behavior
 

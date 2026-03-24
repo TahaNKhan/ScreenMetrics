@@ -23,6 +23,7 @@ void DisplayManager::refreshPageCount() {
 
 void DisplayManager::requestRedraw() {
     refreshPageCount();
+    needsRedraw = true;
 }
 
 void DisplayManager::setIp(const String& ip) {
@@ -36,12 +37,21 @@ void DisplayManager::setWifiConnected(bool connected) {
 void DisplayManager::update() {
     unsigned long now = millis();
 
+    // Auto-scroll to next page
     if (_store.count() > 1 && now - _lastScrollMs > AUTO_SCROLL_MS) {
         _currentPage = (_currentPage + 1) % _pageCount;
         _lastScrollMs = now;
+        needsRedraw = true;
     }
 
-    drawMetricPage();
+    // Redraw if needed or if metric count changed since last draw
+    static int lastKnownCount = -1;
+    if (needsRedraw || _store.count() != lastKnownCount) {
+        lastKnownCount = _store.count();
+        refreshPageCount();
+        drawMetricPage();
+        needsRedraw = false;
+    }
 }
 
 void DisplayManager::drawNoMetrics() {

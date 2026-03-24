@@ -1,6 +1,7 @@
 #ifndef MetricsStore_h
 #define MetricsStore_h
 
+#include <Arduino.h>
 #include <EEPROM.h>
 
 class MetricsStore {

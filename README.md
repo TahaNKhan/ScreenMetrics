@@ -14,7 +14,7 @@ An ESP8266 sketch that displays metrics on an OLED screen. Metrics are persisted
 
 ## Architecture
 
-The codebase follows clean code principles with single-responsibility classes:
+The codebase has the following classes:
 
 | File | Responsibility |
 |------|---------------|
